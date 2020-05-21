@@ -34,7 +34,9 @@ class Disk(object):
             self.lastSectorsRead = disk['sectors_read']
             self.lastSectorsWritten = disk['sectors_written']
             self.nextTimeout = int(time.time()) + self.timeout
-            self.isStandby = False
+            if self.isStandby:
+                print(self.name+" restarted")
+                self.isStandby = False
             return False
         elif self.isStandby:
             return False
