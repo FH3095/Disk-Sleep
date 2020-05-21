@@ -15,14 +15,17 @@ ARGS = None
 #DISKSTATS = 'diskstats.txt'
 
 class Disk(object):
-    def __init__(self,path):
+    def __init__(self,path,timeout):
         self.name = os.path.basename(os.path.realpath(path))
         self.path = path
         self.lastSectorsRead = 0
         self.lastSectorsWritten = 0
+        self.timeout = int(timeout)
+        self.nextTimeout = int(time.time()) + self.timeout
+        self.isStandby = False
         self.lastStandbyStart = 0
-        print("Monitoring "+self.name+"("+self.path+")")
-    def updateAndCheckChanged(self,disks):
+        print("Monitoring "+self.name+"("+self.path+") with timeout "+str(self.timeout))
+    def updateAndCheckTimeoutReached(self,disks):
         if not self.name in disks:
             print("Cant find diskstats-entry for "+self.name+" in "+str(disks), file=sys.stderr)
             return False
@@ -30,6 +33,12 @@ class Disk(object):
         if self.lastSectorsRead != disk['sectors_read'] or self.lastSectorsWritten != disk['sectors_written']:
             self.lastSectorsRead = disk['sectors_read']
             self.lastSectorsWritten = disk['sectors_written']
+            self.nextTimeout = int(time.time()) + self.timeout
+            self.isStandby = False
+            return False
+        elif self.isStandby:
+            return False
+        elif self.nextTimeout < time.time():
             return True
         else:
             return False
@@ -39,6 +48,8 @@ class Disk(object):
         proc = subprocess.run([HDPARM, '-y', self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300, text=True)
         if proc.returncode != 0:
             print("Cant send disk to standyby. hdparm exited with "+str(proc.returncode)+": "+str(proc.stdout), file=sys.stderr)
+        self.updateAndCheckTimeoutReached(readDiskStats())
+        self.isStandby = True
 
 
 def parseArguments(args=None):
@@ -49,12 +60,12 @@ def parseArguments(args=None):
     result = parser.parse_args(args)
     return result
 
-def createDiskList(diskPaths):
+def createDiskList(diskPaths,timeout):
     result = []
     stats = readDiskStats()
     for diskPath in diskPaths:
-        diskObj = Disk(diskPath)
-        diskObj.updateAndCheckChanged(stats)
+        diskObj = Disk(diskPath, timeout)
+        diskObj.updateAndCheckTimeoutReached(stats)
         diskObj.sendToStandby()
         result.append(diskObj)
     return tuple(result)
@@ -81,7 +92,7 @@ def readDiskStats():
 
 
 args = parseArguments(ARGS)
-disks = createDiskList(args.disks)
+disks = createDiskList(args.disks, int(args.timeout))
 sleepTime = int(args.timeout / 100) # Sleep 1% of disk timeout time.
 if sleepTime < 1:
     sleepTime = 1
@@ -91,5 +102,5 @@ while True:
     time.sleep(sleepTime)
     stats = readDiskStats()
     for disk in disks:
-        if disk.updateAndCheckChanged(stats):
+        if disk.updateAndCheckTimeoutReached(stats):
             disk.sendToStandby()
