@@ -10,9 +10,9 @@ HDPARM = 'hdparm'
 DISKSTATS = '/proc/diskstats'
 ARGS = None
 
-ARGS = ['--timeout=25',"/dev/sda",'/dev/sdb']
-HDPARM = r'E:\Program Files\!Portable\Git\usr\bin\ls.exe'
-DISKSTATS = 'diskstats.txt'
+#ARGS = ['--timeout=25',"/dev/sda",'/dev/sdb']
+#HDPARM = r'E:\Program Files\!Portable\Git\usr\bin\ls.exe'
+#DISKSTATS = 'diskstats.txt'
 
 class Disk(object):
     def __init__(self,path,timeout):
