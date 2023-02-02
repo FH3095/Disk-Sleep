@@ -92,6 +92,7 @@ def readDiskStats():
     return result
 
 
+print("Wait 2 minutes before detecting drives")
 time.sleep(120) # Wait 2 minutes to give linux time to detect all disks
 
 args = parseArguments(ARGS)
