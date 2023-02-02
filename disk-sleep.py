@@ -92,6 +92,8 @@ def readDiskStats():
     return result
 
 
+time.sleep(120) # Wait 2 minutes to give linux time to detect all disks
+
 args = parseArguments(ARGS)
 disks = createDiskList(args.disks, int(args.timeout))
 sleepTime = int(args.timeout / 100) # Sleep 1% of disk timeout time.
