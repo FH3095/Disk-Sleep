@@ -28,7 +28,7 @@ class Disk(object):
             proc = subprocess.run([HDPARM, '-S', str(standby), self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300, text=True)
             if proc.returncode != 0:
                 print("Cant set drive timeout. hdparm exited with "+str(proc.returncode)+": "+str(proc.stdout), file=sys.stderr)
-        print("Monitoring "+self.name+"("+self.path+") with timeout "+str(self.timeout)+" and drive-standby"+str(standby))
+        print("Monitoring "+self.name+"("+self.path+") with timeout "+str(self.timeout)+" and drive-standby "+str(standby))
     def updateAndCheckTimeoutReached(self,disks):
         if not self.name in disks:
             print("Cant find diskstats-entry for "+self.name+" in "+str(disks), file=sys.stderr)
