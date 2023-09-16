@@ -15,7 +15,7 @@ ARGS = None
 #DISKSTATS = 'diskstats.txt'
 
 class Disk(object):
-    def __init__(self,path,timeout):
+    def __init__(self,path,timeout,standby):
         self.name = os.path.basename(os.path.realpath(path))
         self.path = path
         self.lastSectorsRead = 0
@@ -24,7 +24,11 @@ class Disk(object):
         self.nextTimeout = int(time.time()) + self.timeout
         self.isStandby = False
         self.lastStandbyStart = 0
-        print("Monitoring "+self.name+"("+self.path+") with timeout "+str(self.timeout))
+        if standby >= 0 and standby <= 255:
+            proc = subprocess.run([HDPARM, '-S', str(standby), self.path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300, text=True)
+            if proc.returncode != 0:
+                print("Cant set drive timeout. hdparm exited with "+str(proc.returncode)+": "+str(proc.stdout), file=sys.stderr)
+        print("Monitoring "+self.name+"("+self.path+") with timeout "+str(self.timeout)+" and drive-standby"+str(standy))
     def updateAndCheckTimeoutReached(self,disks):
         if not self.name in disks:
             print("Cant find diskstats-entry for "+self.name+" in "+str(disks), file=sys.stderr)
@@ -58,6 +62,7 @@ def parseArguments(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', action='version', version='%(prog)s '+VERSION)
     parser.add_argument('-t', '--timeout', dest='timeout', default=10800, type=int, help='Send disks to standby after seconds')
+    parser.add_argument('-s', '--drive-standby', dest='standby', default=-1, type=int, help='Set disk timeout via hdparm -S, if number is >= 0')
     parser.add_argument('disks', nargs='+', metavar='disk', help='Disks to send to standby')
     result = parser.parse_args(args)
     return result
@@ -96,7 +101,7 @@ print("Wait 2 minutes before detecting drives")
 time.sleep(120) # Wait 2 minutes to give linux time to detect all disks
 
 args = parseArguments(ARGS)
-disks = createDiskList(args.disks, int(args.timeout))
+disks = createDiskList(args.disks, int(args.timeout), int(args.standby))
 sleepTime = int(args.timeout / 100) # Sleep 1% of disk timeout time.
 if sleepTime < 1:
     sleepTime = 1

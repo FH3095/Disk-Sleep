@@ -1,7 +1,7 @@
 [Service]
 EnvironmentFile=/etc/disk-sleep.conf
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/usr/local/sbin/disk-sleep.py --timeout $TIMEOUT $DISKS
+ExecStart=/usr/local/sbin/disk-sleep.py --timeout $TIMEOUT --drive-standby $DRIVE_STANDBY_TIMEOUT $DISKS
 
 [Install]
 WantedBy=multi-user.target
