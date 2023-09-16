@@ -67,11 +67,11 @@ def parseArguments(args=None):
     result = parser.parse_args(args)
     return result
 
-def createDiskList(diskPaths,timeout):
+def createDiskList(diskPaths,timeout,standby):
     result = []
     stats = readDiskStats()
     for diskPath in diskPaths:
-        diskObj = Disk(diskPath, timeout)
+        diskObj = Disk(diskPath, timeout, standby)
         diskObj.updateAndCheckTimeoutReached(stats)
         result.append(diskObj)
     return tuple(result)
